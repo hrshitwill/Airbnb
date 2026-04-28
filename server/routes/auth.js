@@ -2,8 +2,7 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const authMiddleware = require("../middleware/authmiddleware");
-
+const authMiddleware = require("../middleware/authMiddleware");
 
 
 // ================= REGISTER =================
@@ -29,7 +28,11 @@ router.post("/register", async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
-      user
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
     });
 
   } catch (error) {
@@ -72,7 +75,7 @@ router.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax"
     });
 
@@ -92,10 +95,11 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+// ================= GET CURRENT USER =================
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-
     res.json(user);
 
   } catch (error) {
@@ -104,6 +108,9 @@ router.get("/me", authMiddleware, async (req, res) => {
     });
   }
 });
+
+
+// ================= LOGOUT =================
 router.post("/logout", (req, res) => {
   res.clearCookie("token");
 

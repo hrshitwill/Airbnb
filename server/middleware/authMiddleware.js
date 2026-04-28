@@ -2,12 +2,19 @@ const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    // Get token from cookies OR headers
+    const token =
+      req.cookies.token ||
+      req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
         message: "Not authenticated"
       });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET not set");
     }
 
     const decoded = jwt.verify(
@@ -21,7 +28,7 @@ const authMiddleware = (req, res, next) => {
 
   } catch (error) {
     return res.status(401).json({
-      message: "Invalid token"
+      message: error.message || "Invalid token"
     });
   }
 };

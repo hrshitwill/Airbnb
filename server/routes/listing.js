@@ -1,6 +1,7 @@
 const router = require("express").Router();
+const mongoose = require("mongoose");
 const Listing = require("../models/Listing");
-const authMiddleware = require("../middleware/authmiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
 
 // ================= CREATE LISTING =================
@@ -11,6 +12,12 @@ router.post("/create", authMiddleware, async (req, res) => {
     if (!title || !description || !price || !location || !image) {
       return res.status(400).json({
         message: "All fields are required"
+      });
+    }
+
+    if (price <= 0) {
+      return res.status(400).json({
+        message: "Price must be greater than 0"
       });
     }
 
@@ -56,6 +63,12 @@ router.get("/", async (req, res) => {
 // ================= GET SINGLE LISTING =================
 router.get("/:id", async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid ID"
+      });
+    }
+
     const listing = await Listing.findById(req.params.id)
       .populate("owner", "name email");
 
